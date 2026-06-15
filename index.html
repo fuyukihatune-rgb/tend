@@ -1,0 +1,782 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>Tend - 世話する習慣</title>
+<meta name="description" content="途切れてもいい。ただ、続きを置く。責めない習慣トラッカー。" />
+<meta name="theme-color" content="#14161a" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="Tend" />
+<link rel="manifest" href="./manifest.json" />
+<link rel="apple-touch-icon" href="./icons/icon-192.png" />
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #14161a;
+  --surface: #1c2026;
+  --surface2: #22272f;
+  --border: #262d3a;
+  --text: #e2e8f0;
+  --text2: #7a8fa8;
+  --text3: #3e4a5c;
+  --green: #5aaa72;
+  --green-soft: rgba(90,170,114,0.1);
+  --green-border: rgba(90,170,114,0.35);
+  --red: #d95f5f;
+}
+html { background: var(--bg); color: var(--text); font-family: -apple-system, "Helvetica Neue", "Yu Gothic", sans-serif; -webkit-font-smoothing: antialiased; min-height: 100dvh; }
+body { padding-top: calc(env(safe-area-inset-top,0px) + 52px); padding-bottom: calc(env(safe-area-inset-bottom,0px) + 80px); }
+#app { max-width: 440px; margin: 0 auto; }
+
+/* TopBar */
+.topbar { position: fixed; top: 0; left: 0; right: 0; z-index: 100; background: var(--bg); border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; padding: calc(env(safe-area-inset-top,0px) + 10px) 18px 10px; height: calc(env(safe-area-inset-top,0px) + 52px); }
+.topbar-title { font-size: 15px; font-weight: 700; }
+.top-btn { background: none; border: none; color: var(--text2); font-size: 22px; cursor: pointer; padding: 4px 2px; line-height: 1; font-family: inherit; }
+.brand { font-size: 17px; font-weight: 900; letter-spacing: -0.03em; color: var(--green); }
+
+/* Screen */
+.screen { padding: 16px 16px 0; }
+
+/* Card */
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: 18px; padding: 18px; margin-bottom: 12px; }
+
+/* Terms */
+.terms-hero { text-align: center; padding: 36px 0 24px; }
+.terms-box { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 20px; font-size: 13px; color: var(--text2); line-height: 1.9; margin-bottom: 16px; max-height: 320px; overflow-y: auto; }
+.terms-box h3 { color: var(--text); font-size: 14px; font-weight: 700; margin-bottom: 10px; }
+.terms-box p { margin-bottom: 10px; }
+
+/* Habit card */
+.habit-card { display: flex; gap: 14px; align-items: flex-start; }
+.plant-wrap { flex-shrink: 0; cursor: pointer; }
+.habit-body { flex: 1; min-width: 0; }
+.habit-name { font-size: 17px; font-weight: 800; letter-spacing: -0.03em; cursor: pointer; }
+.habit-last { font-size: 12px; color: var(--text3); margin-top: 3px; }
+.habit-count { margin-top: 8px; }
+.habit-count-val { font-size: 22px; font-weight: 900; color: var(--green); letter-spacing: -0.04em; line-height: 1; }
+.habit-count-lbl { font-size: 11px; color: var(--text3); margin-top: 1px; }
+
+/* Tend button */
+.tend-btn { display: flex; align-items: center; justify-content: center; gap: 6px; margin-top: 14px; width: 100%; background: var(--green-soft); border: 1.5px solid var(--green-border); color: var(--green); border-radius: 12px; padding: 11px 0; font-size: 14px; font-weight: 700; cursor: pointer; transition: opacity 0.15s, transform 0.12s; font-family: inherit; }
+.tend-btn:active { transform: scale(0.97); opacity: 0.8; }
+.tend-btn.done { background: transparent; border-color: var(--border); color: var(--text3); cursor: default; }
+
+/* FAB */
+.fab { position: fixed; bottom: calc(env(safe-area-inset-bottom,0px) + 20px); right: 18px; z-index: 100; width: 56px; height: 56px; background: var(--green); border: none; border-radius: 50%; color: #111; font-size: 28px; cursor: pointer; box-shadow: 0 4px 20px rgba(90,170,114,0.45); display: flex; align-items: center; justify-content: center; transition: transform 0.12s, box-shadow 0.12s; font-family: inherit; line-height: 1; }
+.fab:active { transform: scale(0.93); box-shadow: 0 2px 10px rgba(90,170,114,0.3); }
+
+/* Form */
+.form-label { font-size: 11px; font-weight: 700; color: var(--text3); letter-spacing: 0.07em; text-transform: uppercase; margin-bottom: 7px; display: block; }
+.form-input { width: 100%; background: var(--surface2); border: 1px solid var(--border); border-radius: 11px; color: var(--text); font-size: 16px; padding: 12px 14px; outline: none; transition: border-color 0.15s; font-family: inherit; }
+.form-input:focus { border-color: var(--green); }
+.form-input.err { border-color: var(--red); }
+.form-row { margin-bottom: 20px; }
+.chip-row { display: flex; gap: 8px; flex-wrap: wrap; }
+.chip { background: var(--surface2); border: 1.5px solid var(--border); border-radius: 10px; padding: 8px 14px; cursor: pointer; font-size: 13px; color: var(--text2); transition: border-color 0.15s, color 0.15s, background 0.15s; font-family: inherit; }
+.chip.sel { border-color: var(--green); color: var(--green); background: var(--green-soft); }
+.swatch-row { display: flex; gap: 10px; flex-wrap: wrap; }
+.swatch { width: 34px; height: 34px; border-radius: 50%; border: 3px solid transparent; cursor: pointer; transition: border-color 0.15s, transform 0.12s; outline: none; }
+.swatch.sel { border-color: var(--text); transform: scale(1.18); }
+
+/* Buttons */
+.btn { display: flex; align-items: center; justify-content: center; width: 100%; background: var(--green); color: #0d1109; border: none; border-radius: 14px; padding: 14px 0; font-size: 16px; font-weight: 800; cursor: pointer; transition: opacity 0.15s, transform 0.1s; font-family: inherit; letter-spacing: -0.01em; }
+.btn:active { opacity: 0.85; transform: scale(0.98); }
+.btn-ghost { background: transparent; color: var(--text2); border: 1px solid var(--border); font-weight: 600; }
+.btn-danger { background: transparent; color: var(--red); border: 1px solid rgba(217,95,95,0.25); font-weight: 600; }
+
+/* Stat row */
+.stat-row { display: flex; gap: 10px; margin-bottom: 12px; }
+.stat-card { flex: 1; background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 14px; text-align: center; }
+.stat-val { font-size: 30px; font-weight: 900; color: var(--green); letter-spacing: -0.05em; line-height: 1.1; }
+.stat-lbl { font-size: 11px; color: var(--text3); margin-top: 3px; }
+
+/* Heatmap */
+.heatmap-wrap { display: flex; gap: 0; align-items: flex-start; overflow-x: auto; }
+.hm-day-col { display: flex; flex-direction: column; gap: 3px; margin-right: 2px; }
+.hm-day-lbl { font-size: 9px; color: var(--text3); width: 12px; text-align: right; line-height: 13px; height: 13px; }
+.hm-cols { display: flex; gap: 3px; }
+.hm-col { display: flex; flex-direction: column; gap: 3px; }
+.hm-cell { width: 13px; height: 13px; border-radius: 3px; background: var(--surface2); flex-shrink: 0; }
+.hm-cell.on { background: var(--green); }
+.hm-cell.on2 { background: rgba(90,170,114,0.45); }
+
+/* Log */
+.log-item { padding: 10px 0; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
+.log-item:last-child { border-bottom: none; }
+.log-date { font-size: 12px; color: var(--text2); white-space: nowrap; }
+.log-note { font-size: 13px; color: var(--text); margin-top: 2px; }
+
+/* Empty */
+.empty { text-align: center; padding: 60px 20px 40px; }
+.empty-msg { font-size: 14px; color: var(--text3); line-height: 1.9; margin-top: 16px; }
+
+/* Section label */
+.sec-lbl { font-size: 11px; font-weight: 700; color: var(--text3); letter-spacing: 0.07em; margin: 20px 0 8px; }
+
+/* Welcome back */
+.welcome-back { background: var(--green-soft); border: 1px solid var(--green-border); border-radius: 12px; padding: 12px 16px; margin-bottom: 14px; font-size: 13px; color: var(--green); text-align: center; font-weight: 600; }
+
+/* Modal */
+.modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.65); z-index: 200; display: flex; align-items: flex-end; justify-content: center; }
+.modal { background: var(--surface); border-radius: 22px 22px 0 0; padding: 22px 20px calc(env(safe-area-inset-bottom,0px) + 22px); width: 100%; max-width: 440px; }
+.modal-title { font-size: 16px; font-weight: 800; margin-bottom: 14px; }
+.modal textarea { width: 100%; background: var(--surface2); border: 1px solid var(--border); border-radius: 11px; color: var(--text); font-size: 15px; padding: 12px 14px; outline: none; font-family: inherit; resize: none; height: 90px; line-height: 1.6; }
+.modal textarea:focus { border-color: var(--green); }
+.modal-btns { display: flex; gap: 10px; margin-top: 12px; }
+
+/* Growth badge */
+.growth-badge { display: inline-flex; align-items: center; gap: 5px; background: var(--green-soft); border: 1px solid var(--green-border); border-radius: 8px; padding: 4px 10px; font-size: 11px; font-weight: 700; color: var(--green); }
+
+/* Preview */
+.preview-plant { text-align: center; background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 24px; margin-bottom: 22px; }
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script>
+'use strict';
+
+/* ── Constants ── */
+const STORAGE_KEY = 'tend_v1';
+const TERMS_VER   = 1;
+const APP_URL     = 'https://tend.xdcyw.net';
+
+const PLANT_TYPES = [
+  { id: 'flower',    label: '草花' },
+  { id: 'herb',      label: 'ハーブ' },
+  { id: 'succulent', label: '多肉' },
+  { id: 'tree',      label: '木' },
+];
+
+const PLANT_COLORS = ['#5aaa72','#5a9fd4','#d4885a','#a87ac8','#c8a84a','#c85a80'];
+
+const RHYTHMS = [
+  { id: 'daily',    label: '毎日' },
+  { id: 'few',      label: '数日に一度' },
+  { id: 'whenever', label: '気が向いたとき' },
+];
+
+/* ── State ── */
+let state = { termsVer: 0, habits: [], tendings: [] };
+
+function loadState() {
+  try { const r = localStorage.getItem(STORAGE_KEY); if (r) state = { ...state, ...JSON.parse(r) }; } catch {}
+}
+function saveState() {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch {}
+}
+
+/* ── Helpers ── */
+function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 6); }
+
+function todayStr() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+
+function fmtDate(ds) {
+  if (!ds) return 'まだない';
+  const today = todayStr();
+  const yest = (() => { const x = new Date(); x.setDate(x.getDate()-1); return x.toISOString().slice(0,10); })();
+  if (ds === today) return '今日';
+  if (ds === yest)  return '昨日';
+  const diff = Math.floor((new Date(today) - new Date(ds)) / 86400000);
+  if (diff < 8) return `${diff}日前`;
+  const d = new Date(ds);
+  return `${d.getMonth()+1}/${d.getDate()}`;
+}
+
+function habitTendings(id) {
+  return state.tendings.filter(t => t.habitId === id).sort((a,b) => b.ts - a.ts);
+}
+
+function tendedToday(id) {
+  return state.tendings.some(t => t.habitId === id && t.date === todayStr());
+}
+
+function lastDate(id) {
+  const ts = habitTendings(id);
+  return ts.length ? ts[0].date : null;
+}
+
+function stage(count) {
+  if (count === 0) return 0;
+  if (count < 5)   return 1;
+  if (count < 15)  return 2;
+  if (count < 40)  return 3;
+  return 4;
+}
+
+const STAGE_NAMES = ['種', '芽生え', '成長中', '育っている', '満開'];
+
+/* ── Plant SVG ── */
+function rgba(hex, a) {
+  const r = parseInt(hex.slice(1,3),16), g = parseInt(hex.slice(3,5),16), b = parseInt(hex.slice(5,7),16);
+  return `rgba(${r},${g},${b},${a})`;
+}
+
+function plantSVG(type, count, color, size) {
+  const sz = size || 72;
+  const s  = stage(count);
+  const c  = color || '#5aaa72';
+  const soil = `<line x1="10" y1="72" x2="70" y2="72" stroke="#3a4555" stroke-width="1.5" stroke-linecap="round"/>`;
+
+  let body = '';
+
+  if (type === 'flower') {
+    if (s === 0) {
+      body = `${soil}<ellipse cx="40" cy="71" rx="8" ry="3.5" fill="${c}" opacity="0.4"/>`;
+    } else if (s === 1) {
+      body = `${soil}
+        <line x1="40" y1="70" x2="40" y2="56" stroke="${c}" stroke-width="2.5" stroke-linecap="round"/>
+        <path d="M40 62 Q31 53 36 62" fill="${c}" opacity="0.65"/>
+        <path d="M40 62 Q49 53 44 62" fill="${c}" opacity="0.65"/>
+        <circle cx="40" cy="53" r="4" fill="${c}" opacity="0.55"/>`;
+    } else if (s === 2) {
+      body = `${soil}
+        <line x1="40" y1="70" x2="40" y2="47" stroke="${c}" stroke-width="2.5" stroke-linecap="round"/>
+        <path d="M40 60 Q28 51 35 60" fill="${c}" opacity="0.6"/>
+        <path d="M40 60 Q52 51 45 60" fill="${c}" opacity="0.6"/>
+        <path d="M40 52 Q31 44 37 52" fill="${c}" opacity="0.5"/>
+        <circle cx="40" cy="43" r="6" fill="${c}" opacity="0.6"/>`;
+    } else if (s === 3) {
+      body = `${soil}
+        <line x1="40" y1="70" x2="39" y2="37" stroke="${c}" stroke-width="2.5" stroke-linecap="round"/>
+        <path d="M40 62 Q26 52 33 62" fill="${c}" opacity="0.65"/>
+        <path d="M40 62 Q54 52 47 62" fill="${c}" opacity="0.65"/>
+        <path d="M40 53 Q28 44 35 53" fill="${c}" opacity="0.55"/>
+        <path d="M40 53 Q52 44 45 53" fill="${c}" opacity="0.55"/>
+        <circle cx="40" cy="20" r="5.5" fill="${c}" opacity="0.5"/>
+        <circle cx="51" cy="26" r="5.5" fill="${c}" opacity="0.5"/>
+        <circle cx="29" cy="26" r="5.5" fill="${c}" opacity="0.5"/>
+        <circle cx="50" cy="37" r="5"   fill="${c}" opacity="0.45"/>
+        <circle cx="30" cy="37" r="5"   fill="${c}" opacity="0.45"/>
+        <circle cx="40" cy="30" r="7"   fill="${c}"/>`;
+    } else {
+      body = `${soil}
+        <line x1="40" y1="70" x2="38" y2="30" stroke="${c}" stroke-width="3" stroke-linecap="round"/>
+        <path d="M39 63 Q23 52 31 63" fill="${c}" opacity="0.65"/>
+        <path d="M39 63 Q55 52 47 63" fill="${c}" opacity="0.65"/>
+        <path d="M39 54 Q25 44 33 54" fill="${c}" opacity="0.6"/>
+        <path d="M39 54 Q53 44 45 54" fill="${c}" opacity="0.6"/>
+        <path d="M39 45 Q27 36 35 45" fill="${c}" opacity="0.55"/>
+        <path d="M39 45 Q51 36 43 45" fill="${c}" opacity="0.55"/>
+        <circle cx="40" cy="14" r="6"   fill="${c}" opacity="0.55"/>
+        <circle cx="52" cy="21" r="6"   fill="${c}" opacity="0.55"/>
+        <circle cx="28" cy="21" r="6"   fill="${c}" opacity="0.55"/>
+        <circle cx="52" cy="33" r="5.5" fill="${c}" opacity="0.5"/>
+        <circle cx="28" cy="33" r="5.5" fill="${c}" opacity="0.5"/>
+        <circle cx="40" cy="26" r="9"   fill="${c}"/>`;
+    }
+  } else if (type === 'herb') {
+    if (s === 0) {
+      body = `${soil}<ellipse cx="40" cy="71" rx="8" ry="3.5" fill="${c}" opacity="0.4"/>`;
+    } else if (s === 1) {
+      body = `${soil}
+        <line x1="40" y1="70" x2="40" y2="55" stroke="${c}" stroke-width="2" stroke-linecap="round"/>
+        <ellipse cx="40" cy="51" rx="4.5" ry="6.5" fill="${c}" opacity="0.75" transform="rotate(-8,40,51)"/>
+        <ellipse cx="34" cy="57" rx="3.5" ry="5.5" fill="${c}" opacity="0.6" transform="rotate(-28,34,57)"/>`;
+    } else if (s === 2) {
+      body = `${soil}
+        <line x1="40" y1="70" x2="40" y2="47" stroke="${c}" stroke-width="2.5" stroke-linecap="round"/>
+        <ellipse cx="40" cy="44" rx="5" ry="7" fill="${c}" opacity="0.8"/>
+        <ellipse cx="32" cy="52" rx="4.5" ry="6.5" fill="${c}" opacity="0.65" transform="rotate(-22,32,52)"/>
+        <ellipse cx="48" cy="52" rx="4.5" ry="6.5" fill="${c}" opacity="0.65" transform="rotate(22,48,52)"/>
+        <ellipse cx="33" cy="44" rx="3.5" ry="5.5" fill="${c}" opacity="0.5" transform="rotate(-33,33,44)"/>
+        <ellipse cx="47" cy="44" rx="3.5" ry="5.5" fill="${c}" opacity="0.5" transform="rotate(33,47,44)"/>`;
+    } else if (s === 3) {
+      body = `${soil}
+        <line x1="40" y1="70" x2="40" y2="39" stroke="${c}" stroke-width="3" stroke-linecap="round"/>
+        <ellipse cx="40" cy="36" rx="6" ry="8" fill="${c}" opacity="0.85"/>
+        <ellipse cx="30" cy="45" rx="5.5" ry="7.5" fill="${c}" opacity="0.7" transform="rotate(-25,30,45)"/>
+        <ellipse cx="50" cy="45" rx="5.5" ry="7.5" fill="${c}" opacity="0.7" transform="rotate(25,50,45)"/>
+        <ellipse cx="27" cy="36" rx="4.5" ry="6.5" fill="${c}" opacity="0.58" transform="rotate(-38,27,36)"/>
+        <ellipse cx="53" cy="36" rx="4.5" ry="6.5" fill="${c}" opacity="0.58" transform="rotate(38,53,36)"/>
+        <ellipse cx="30" cy="56" rx="4.5" ry="6" fill="${c}" opacity="0.6" transform="rotate(-18,30,56)"/>
+        <ellipse cx="50" cy="56" rx="4.5" ry="6" fill="${c}" opacity="0.6" transform="rotate(18,50,56)"/>`;
+    } else {
+      body = `${soil}
+        <line x1="40" y1="70" x2="40" y2="32" stroke="${c}" stroke-width="3" stroke-linecap="round"/>
+        <ellipse cx="40" cy="29" rx="7" ry="9" fill="${c}" opacity="0.9"/>
+        <ellipse cx="28" cy="39" rx="6" ry="8" fill="${c}" opacity="0.75" transform="rotate(-28,28,39)"/>
+        <ellipse cx="52" cy="39" rx="6" ry="8" fill="${c}" opacity="0.75" transform="rotate(28,52,39)"/>
+        <ellipse cx="24" cy="28" rx="5" ry="7" fill="${c}" opacity="0.6" transform="rotate(-42,24,28)"/>
+        <ellipse cx="56" cy="28" rx="5" ry="7" fill="${c}" opacity="0.6" transform="rotate(42,56,28)"/>
+        <ellipse cx="28" cy="52" rx="5" ry="7" fill="${c}" opacity="0.65" transform="rotate(-20,28,52)"/>
+        <ellipse cx="52" cy="52" rx="5" ry="7" fill="${c}" opacity="0.65" transform="rotate(20,52,52)"/>
+        <ellipse cx="26" cy="18" rx="4" ry="6" fill="${c}" opacity="0.5" transform="rotate(-48,26,18)"/>
+        <ellipse cx="54" cy="18" rx="4" ry="6" fill="${c}" opacity="0.5" transform="rotate(48,54,18)"/>`;
+    }
+  } else if (type === 'succulent') {
+    if (s === 0) {
+      body = `${soil}<ellipse cx="40" cy="71" rx="8" ry="3.5" fill="${c}" opacity="0.4"/>`;
+    } else if (s === 1) {
+      body = `${soil}
+        <ellipse cx="40" cy="61" rx="6" ry="8" fill="${c}" opacity="0.85"/>
+        <ellipse cx="33" cy="65" rx="4.5" ry="6" fill="${c}" opacity="0.65"/>
+        <ellipse cx="47" cy="65" rx="4.5" ry="6" fill="${c}" opacity="0.65"/>`;
+    } else if (s === 2) {
+      body = `${soil}
+        <ellipse cx="40" cy="58" rx="7" ry="9" fill="${c}"/>
+        <ellipse cx="30" cy="63" rx="5.5" ry="7.5" fill="${c}" opacity="0.82"/>
+        <ellipse cx="50" cy="63" rx="5.5" ry="7.5" fill="${c}" opacity="0.82"/>
+        <ellipse cx="24" cy="67" rx="4.5" ry="6" fill="${c}" opacity="0.62"/>
+        <ellipse cx="56" cy="67" rx="4.5" ry="6" fill="${c}" opacity="0.62"/>`;
+    } else if (s === 3) {
+      body = `${soil}
+        <ellipse cx="40" cy="55" rx="8" ry="10" fill="${c}"/>
+        <ellipse cx="28" cy="61" rx="7" ry="9" fill="${c}" opacity="0.85"/>
+        <ellipse cx="52" cy="61" rx="7" ry="9" fill="${c}" opacity="0.85"/>
+        <ellipse cx="20" cy="66" rx="5.5" ry="7" fill="${c}" opacity="0.65"/>
+        <ellipse cx="60" cy="66" rx="5.5" ry="7" fill="${c}" opacity="0.65"/>
+        <ellipse cx="30" cy="49" rx="6" ry="8" fill="${c}" opacity="0.75"/>
+        <ellipse cx="50" cy="49" rx="6" ry="8" fill="${c}" opacity="0.75"/>
+        <ellipse cx="40" cy="46" rx="6" ry="8" fill="${c}"/>`;
+    } else {
+      body = `${soil}
+        <ellipse cx="40" cy="53" rx="9" ry="11" fill="${c}"/>
+        <ellipse cx="26" cy="60" rx="8" ry="10" fill="${c}" opacity="0.85"/>
+        <ellipse cx="54" cy="60" rx="8" ry="10" fill="${c}" opacity="0.85"/>
+        <ellipse cx="17" cy="66" rx="6" ry="8" fill="${c}" opacity="0.65"/>
+        <ellipse cx="63" cy="66" rx="6" ry="8" fill="${c}" opacity="0.65"/>
+        <ellipse cx="28" cy="46" rx="6.5" ry="8.5" fill="${c}" opacity="0.8"/>
+        <ellipse cx="52" cy="46" rx="6.5" ry="8.5" fill="${c}" opacity="0.8"/>
+        <ellipse cx="40" cy="43" rx="7" ry="9" fill="${c}"/>
+        <ellipse cx="40" cy="36" rx="5.5" ry="7.5" fill="${c}" opacity="0.9"/>
+        <ellipse cx="31" cy="39" rx="4.5" ry="6.5" fill="${c}" opacity="0.72"/>
+        <ellipse cx="49" cy="39" rx="4.5" ry="6.5" fill="${c}" opacity="0.72"/>`;
+    }
+  } else {
+    /* tree */
+    const trunk = rgba(c, 0.68);
+    if (s === 0) {
+      body = `${soil}<ellipse cx="40" cy="71" rx="8" ry="3.5" fill="${c}" opacity="0.4"/>`;
+    } else if (s === 1) {
+      body = `${soil}
+        <line x1="40" y1="70" x2="40" y2="57" stroke="${trunk}" stroke-width="4" stroke-linecap="round"/>
+        <ellipse cx="40" cy="52" rx="7" ry="6" fill="${c}" opacity="0.72"/>`;
+    } else if (s === 2) {
+      body = `${soil}
+        <line x1="40" y1="70" x2="40" y2="52" stroke="${trunk}" stroke-width="4" stroke-linecap="round"/>
+        <line x1="40" y1="63" x2="30" y2="56" stroke="${rgba(c,.45)}" stroke-width="2.5" stroke-linecap="round"/>
+        <line x1="40" y1="63" x2="50" y2="56" stroke="${rgba(c,.45)}" stroke-width="2.5" stroke-linecap="round"/>
+        <ellipse cx="40" cy="45" rx="11" ry="9" fill="${c}" opacity="0.76"/>`;
+    } else if (s === 3) {
+      body = `${soil}
+        <line x1="40" y1="70" x2="40" y2="45" stroke="${trunk}" stroke-width="5" stroke-linecap="round"/>
+        <line x1="40" y1="62" x2="26" y2="54" stroke="${rgba(c,.48)}" stroke-width="3" stroke-linecap="round"/>
+        <line x1="40" y1="62" x2="54" y2="54" stroke="${rgba(c,.48)}" stroke-width="3" stroke-linecap="round"/>
+        <line x1="40" y1="53" x2="28" y2="44" stroke="${rgba(c,.38)}" stroke-width="2.5" stroke-linecap="round"/>
+        <line x1="40" y1="53" x2="52" y2="44" stroke="${rgba(c,.38)}" stroke-width="2.5" stroke-linecap="round"/>
+        <ellipse cx="40" cy="36" rx="15" ry="12" fill="${c}" opacity="0.82"/>
+        <ellipse cx="26" cy="46" rx="9" ry="8" fill="${c}" opacity="0.68"/>
+        <ellipse cx="54" cy="46" rx="9" ry="8" fill="${c}" opacity="0.68"/>`;
+    } else {
+      body = `${soil}
+        <line x1="40" y1="70" x2="40" y2="40" stroke="${trunk}" stroke-width="5.5" stroke-linecap="round"/>
+        <line x1="40" y1="63" x2="22" y2="53" stroke="${rgba(c,.5)}" stroke-width="3.5" stroke-linecap="round"/>
+        <line x1="40" y1="63" x2="58" y2="53" stroke="${rgba(c,.5)}" stroke-width="3.5" stroke-linecap="round"/>
+        <line x1="40" y1="53" x2="24" y2="43" stroke="${rgba(c,.4)}" stroke-width="2.5" stroke-linecap="round"/>
+        <line x1="40" y1="53" x2="56" y2="43" stroke="${rgba(c,.4)}" stroke-width="2.5" stroke-linecap="round"/>
+        <line x1="40" y1="44" x2="27" y2="34" stroke="${rgba(c,.32)}" stroke-width="2" stroke-linecap="round"/>
+        <line x1="40" y1="44" x2="53" y2="34" stroke="${rgba(c,.32)}" stroke-width="2" stroke-linecap="round"/>
+        <ellipse cx="40" cy="28" rx="19" ry="15" fill="${c}" opacity="0.86"/>
+        <ellipse cx="22" cy="42" rx="11" ry="9" fill="${c}" opacity="0.7"/>
+        <ellipse cx="58" cy="42" rx="11" ry="9" fill="${c}" opacity="0.7"/>
+        <ellipse cx="20" cy="30" rx="8" ry="10" fill="${c}" opacity="0.55"/>
+        <ellipse cx="60" cy="30" rx="8" ry="10" fill="${c}" opacity="0.55"/>`;
+    }
+  }
+
+  return `<svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg" style="width:${sz}px;height:${sz}px;display:block">${body}</svg>`;
+}
+
+/* ── Heatmap ── */
+function renderHeatmap(habitId) {
+  const tSet = new Set(habitTendings(habitId).map(t => t.date));
+  const today = new Date();
+  const weeks = 16;
+  const cols = [];
+  const start = new Date(today);
+  start.setDate(start.getDate() - (weeks * 7 - 1));
+
+  let col = [];
+  let d = new Date(start);
+  while (d <= today) {
+    const ds = d.toISOString().slice(0,10);
+    col.push({ ds, on: tSet.has(ds) });
+    if (col.length === 7) { cols.push(col); col = []; }
+    d.setDate(d.getDate() + 1);
+  }
+  if (col.length) { while (col.length < 7) col.push({ ds: '', on: false }); cols.push(col); }
+
+  const dl = ['日','月','火','水','木','金','土'];
+  return `
+    <div class="heatmap-wrap">
+      <div class="hm-day-col">
+        ${dl.map((l,i) => `<div class="hm-day-lbl">${i%2===0?l:''}</div>`).join('')}
+      </div>
+      <div class="hm-cols">
+        ${cols.map(col => `<div class="hm-col">${col.map(cell => `<div class="hm-cell${cell.on?' on':''}" title="${cell.ds}"></div>`).join('')}</div>`).join('')}
+      </div>
+    </div>`;
+}
+
+/* ── Navigation ── */
+let nav = { screen: 'garden', habitId: null };
+let addForm = { plant: 'flower', color: '#5aaa72', rhythm: 'daily' };
+
+function go(screen, habitId) {
+  if (screen === 'add') addForm = { plant: 'flower', color: '#5aaa72', rhythm: 'daily' };
+  nav = { screen, habitId: habitId || null };
+  render();
+}
+
+/* ── Actions ── */
+function doTend(habitId, note) {
+  if (tendedToday(habitId)) return;
+  state.tendings.push({ id: uid(), habitId, date: todayStr(), ts: Date.now(), note: note || '' });
+  saveState();
+  render();
+}
+
+function doAdd({ name, plant, color, rhythm }) {
+  state.habits.push({ id: uid(), name, plant, color, rhythm, createdAt: Date.now(), resting: false });
+  saveState();
+  go('garden');
+}
+
+function doRest(habitId) {
+  const h = state.habits.find(h => h.id === habitId);
+  if (h) { h.resting = true; saveState(); go('garden'); }
+}
+
+function doWake(habitId) {
+  const h = state.habits.find(h => h.id === habitId);
+  if (h) { h.resting = false; saveState(); go('garden'); }
+}
+
+function doDelete(habitId) {
+  state.habits  = state.habits.filter(h => h.id !== habitId);
+  state.tendings = state.tendings.filter(t => t.habitId !== habitId);
+  saveState();
+  go('garden');
+}
+
+function agreeTerms() {
+  state.termsVer = TERMS_VER;
+  saveState();
+  go('garden');
+}
+
+/* ── Sanitize ── */
+function esc(s) {
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+/* ── Screens ── */
+function render() {
+  const app = document.getElementById('app');
+  if (state.termsVer < TERMS_VER) { app.innerHTML = screenTerms(); return; }
+  if (nav.screen === 'add')    { app.innerHTML = screenAdd(); return; }
+  if (nav.screen === 'detail') { app.innerHTML = screenDetail(nav.habitId); return; }
+  app.innerHTML = screenGarden();
+}
+
+/* Terms */
+function screenTerms() {
+  return `
+    <div class="topbar"><span class="brand">Tend</span><span></span><span></span></div>
+    <div class="screen">
+      <div class="terms-hero">
+        ${plantSVG('flower', 40, '#5aaa72', 88)}
+        <div style="font-size:26px;font-weight:900;margin-top:16px;letter-spacing:-0.04em">Tend</div>
+        <div style="font-size:13px;color:var(--text3);margin-top:6px">途切れてもいい。ただ、続きを置く。</div>
+      </div>
+      <div class="terms-box">
+        <h3>このアプリについて</h3>
+        <p>Tend は、習慣を「達成すべきノルマ」ではなく「世話する植物」として扱う、責めない習慣トラッカーです。</p>
+        <p><strong style="color:var(--text)">ストリークはありません。</strong><br>
+        連続日数をカウントしないので、抜けても何も壊れません。カウンターは増えるだけで、絶対にリセットされません。</p>
+        <p><strong style="color:var(--text)">植物は枯れません。</strong><br>
+        どれだけ間が空いても、庭の植物はそのまま待っています。</p>
+        <p><strong style="color:var(--text)">すべてはあなたの端末の中。</strong><br>
+        サーバーへの送信、ログイン、広告、通知は一切ありません。</p>
+        <p style="color:var(--text3);font-size:11px;margin-top:16px">このアプリは医療・精神的健康の専門的サポートを代替するものではありません。<br>© 2026 田中志 / Ataraxia Works</p>
+      </div>
+      <button class="btn" onclick="agreeTerms()">庭をはじめる</button>
+    </div>`;
+}
+
+/* Garden */
+function screenGarden() {
+  const active  = state.habits.filter(h => !h.resting);
+  const resting = state.habits.filter(h =>  h.resting);
+
+  let welcomeBack = '';
+  if (active.length > 0) {
+    const lastTs = active.map(h => lastDate(h.id)).filter(Boolean).sort().reverse();
+    if (lastTs.length) {
+      const diff = (Date.now() - new Date(lastTs[0])) / 86400000;
+      if (diff > 7) welcomeBack = `<div class="welcome-back">おかえり。続きを置こう。</div>`;
+    }
+  }
+
+  const cards = active.map(h => {
+    const count   = habitTendings(h.id).length;
+    const done    = tendedToday(h.id);
+    const ld      = lastDate(h.id);
+    return `
+      <div class="card">
+        <div class="habit-card">
+          <div class="plant-wrap" onclick="go('detail','${h.id}')">
+            ${plantSVG(h.plant, count, h.color, 72)}
+          </div>
+          <div class="habit-body">
+            <div class="habit-name" onclick="go('detail','${h.id}')">${esc(h.name)}</div>
+            <div class="habit-last">${ld ? '最後：' + fmtDate(ld) : 'まだ世話していない'}</div>
+            <div class="habit-count">
+              <div class="habit-count-val">${count}</div>
+              <div class="habit-count-lbl">回、手をかけた</div>
+            </div>
+          </div>
+        </div>
+        <button class="tend-btn${done?' done':''}" onclick="${done ? '' : "openTend('"+h.id+"')"}" ${done?'disabled':''}>
+          ${done ? '今日は世話した ✓' : '世話する'}
+        </button>
+      </div>`;
+  }).join('');
+
+  const empty = active.length === 0 ? `
+    <div class="empty">
+      ${plantSVG('flower', 0, '#3e4a5c', 64)}
+      <div class="empty-msg">庭はまだ空っぽ。<br>ひとつ、植えてみる？</div>
+    </div>` : '';
+
+  const restSection = resting.length ? `
+    <div class="sec-lbl">休ませている</div>
+    ${resting.map(h => {
+      const count = habitTendings(h.id).length;
+      return `
+        <div class="card" style="opacity:0.55;display:flex;align-items:center;gap:12px;padding:14px">
+          ${plantSVG(h.plant, count, h.color, 40)}
+          <div style="flex:1">
+            <div style="font-size:14px;font-weight:700">${esc(h.name)}</div>
+            <div style="font-size:11px;color:var(--text3)">${count}回 世話した</div>
+          </div>
+          <button onclick="doWake('${h.id}')" style="background:var(--green-soft);border:1.5px solid var(--green-border);color:var(--green);border-radius:9px;padding:6px 12px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap">再開する</button>
+        </div>`;
+    }).join('')}` : '';
+
+  return `
+    <div class="topbar">
+      <span class="brand">Tend</span>
+      <span></span>
+      <span style="font-size:12px;color:var(--text3)">${active.length}つの習慣</span>
+    </div>
+    <div class="screen">
+      ${welcomeBack}
+      ${empty}
+      ${cards}
+      ${restSection}
+    </div>
+    <button class="fab" onclick="go('add')" aria-label="習慣を追加">＋</button>
+    <div id="modal"></div>`;
+}
+
+/* Add */
+function screenAdd() {
+  return `
+    <div class="topbar">
+      <button class="top-btn" onclick="go('garden')">‹</button>
+      <span class="topbar-title">新しい習慣を植える</span>
+      <span></span>
+    </div>
+    <div class="screen">
+      <div class="preview-plant" id="preview">
+        ${plantSVG('flower', 0, '#5aaa72', 80)}
+        <div style="font-size:12px;color:var(--text3);margin-top:10px">植えたばかり</div>
+      </div>
+
+      <div class="form-row">
+        <label class="form-label">何を続ける？</label>
+        <input class="form-input" id="f-name" type="text" placeholder="例：日記を書く、水を飲む、散歩する" maxlength="40" oninput="updatePreview()"/>
+      </div>
+
+      <div class="form-row">
+        <label class="form-label">植物の種類</label>
+        <div class="chip-row" id="plant-chips">
+          ${PLANT_TYPES.map((p,i) => `<button class="chip${i===0?' sel':''}" onclick="pickPlant('${p.id}',this)">${p.label}</button>`).join('')}
+        </div>
+      </div>
+
+      <div class="form-row">
+        <label class="form-label">色</label>
+        <div class="swatch-row" id="color-swatches">
+          ${PLANT_COLORS.map((c,i) => `<button class="swatch${i===0?' sel':''}" style="background:${c}" onclick="pickColor('${c}',this)" aria-label="${c}"></button>`).join('')}
+        </div>
+      </div>
+
+      <div class="form-row">
+        <label class="form-label">リズム（ゆるいメモ）</label>
+        <div class="chip-row" id="rhythm-chips">
+          ${RHYTHMS.map((r,i) => `<button class="chip${i===0?' sel':''}" onclick="pickRhythm('${r.id}',this)">${r.label}</button>`).join('')}
+        </div>
+      </div>
+
+      <button class="btn" onclick="submitAdd()" style="margin-top:4px">庭に植える 🌱</button>
+    </div>`;
+}
+
+function pickPlant(id, el) {
+  addForm.plant = id;
+  document.querySelectorAll('#plant-chips .chip').forEach(e => e.classList.remove('sel'));
+  el.classList.add('sel');
+  updatePreview();
+}
+function pickColor(c, el) {
+  addForm.color = c;
+  document.querySelectorAll('#color-swatches .swatch').forEach(e => e.classList.remove('sel'));
+  el.classList.add('sel');
+  updatePreview();
+}
+function pickRhythm(id, el) {
+  addForm.rhythm = id;
+  document.querySelectorAll('#rhythm-chips .chip').forEach(e => e.classList.remove('sel'));
+  el.classList.add('sel');
+}
+function updatePreview() {
+  const p = document.getElementById('preview');
+  if (!p) return;
+  const name = document.getElementById('f-name')?.value || '';
+  p.innerHTML = `
+    ${plantSVG(addForm.plant, 0, addForm.color, 80)}
+    ${name ? `<div style="font-size:14px;font-weight:700;margin-top:10px">${esc(name)}</div>` : ''}
+    <div style="font-size:12px;color:var(--text3);margin-top:4px">植えたばかり</div>`;
+}
+function submitAdd() {
+  const nameEl = document.getElementById('f-name');
+  const name = nameEl?.value.trim();
+  if (!name) { nameEl.classList.add('err'); nameEl.focus(); return; }
+  doAdd({ name, ...addForm });
+}
+
+/* Detail */
+function screenDetail(habitId) {
+  const h = state.habits.find(h => h.id === habitId);
+  if (!h) { go('garden'); return ''; }
+
+  const tendings = habitTendings(habitId);
+  const count    = tendings.length;
+  const done     = tendedToday(habitId);
+  const ld       = lastDate(habitId);
+  const s        = stage(count);
+
+  const logItems = tendings.slice(0,40).map(t => `
+    <div class="log-item">
+      <div>
+        <div class="log-date">${fmtDate(t.date)}<span style="font-size:10px;color:var(--text3);margin-left:6px">${t.date}</span></div>
+        ${t.note ? `<div class="log-note">${esc(t.note)}</div>` : ''}
+      </div>
+    </div>`).join('');
+
+  return `
+    <div class="topbar">
+      <button class="top-btn" onclick="go('garden')">‹</button>
+      <span class="topbar-title">${esc(h.name)}</span>
+      <span></span>
+    </div>
+    <div class="screen">
+      <div style="text-align:center;padding:24px 0 16px">
+        ${plantSVG(h.plant, count, h.color, 108)}
+        <div style="font-size:22px;font-weight:900;margin-top:14px;letter-spacing:-0.04em">${esc(h.name)}</div>
+        <div style="margin-top:8px">
+          <span class="growth-badge">${STAGE_NAMES[s]}</span>
+        </div>
+        <div style="font-size:12px;color:var(--text3);margin-top:8px">${ld ? '最後に世話した日：' + fmtDate(ld) : 'まだ世話していない'}</div>
+      </div>
+
+      <button class="tend-btn${done?' done':''}" onclick="${done ? '' : "openTend('"+habitId+"')"}" ${done?'disabled':''} style="margin-bottom:14px">
+        ${done ? '今日は世話した ✓' : '世話する'}
+      </button>
+
+      <div class="stat-row">
+        <div class="stat-card">
+          <div class="stat-val">${count}</div>
+          <div class="stat-lbl">これまで世話した回数</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-val" style="font-size:22px">${s < 4 ? (40-count > 0 ? 40-count : '0') : '∞'}</div>
+          <div class="stat-lbl">${s < 4 ? '回で次のステージ' : '満開！もっと茂れる'}</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div style="font-size:11px;font-weight:700;color:var(--text3);margin-bottom:10px">記録の密度（直近16週）</div>
+        ${renderHeatmap(habitId)}
+      </div>
+
+      ${tendings.length > 0 ? `
+        <div class="sec-lbl">記録</div>
+        <div class="card">
+          ${logItems}
+          ${tendings.length > 40 ? `<div style="font-size:12px;color:var(--text3);text-align:center;padding-top:10px">他 ${tendings.length-40} 件</div>` : ''}
+        </div>` : ''}
+
+      <div style="margin-top:24px;display:flex;flex-direction:column;gap:10px">
+        <button class="btn btn-ghost" onclick="confirmRest('${habitId}')">しばらく休ませる</button>
+        <button class="btn btn-danger" onclick="confirmDelete('${habitId}')">この習慣を削除する</button>
+      </div>
+      <div style="height:24px"></div>
+    </div>
+    <div id="modal"></div>`;
+}
+
+function confirmRest(id) {
+  if (confirm('この習慣を休ませますか？\n記録はそのまま残ります。いつでも再開できます。')) doRest(id);
+}
+function confirmDelete(id) {
+  const h = state.habits.find(h => h.id === id);
+  if (confirm(`「${h?.name}」を削除しますか？\n記録もすべて削除されます。この操作は取り消せません。`)) doDelete(id);
+}
+
+/* Tend modal */
+function openTend(habitId) {
+  const m = document.getElementById('modal');
+  if (!m) return;
+  m.innerHTML = `
+    <div class="modal-overlay" onclick="closeTend()">
+      <div class="modal" onclick="event.stopPropagation()">
+        <div class="modal-title">世話する</div>
+        <textarea id="tend-note" placeholder="ひとことメモ（任意）"></textarea>
+        <div class="modal-btns">
+          <button class="btn btn-ghost" style="flex:1" onclick="closeTend()">キャンセル</button>
+          <button class="btn" style="flex:2" onclick="submitTend('${habitId}')">置いておく</button>
+        </div>
+      </div>
+    </div>`;
+  setTimeout(() => document.getElementById('tend-note')?.focus(), 80);
+}
+function closeTend() {
+  const m = document.getElementById('modal');
+  if (m) m.innerHTML = '';
+}
+function submitTend(habitId) {
+  const note = document.getElementById('tend-note')?.value.trim() || '';
+  doTend(habitId, note);
+  closeTend();
+}
+
+/* ── PWA ── */
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js').catch(() => {}));
+}
+
+/* ── Boot ── */
+loadState();
+render();
+</script>
+</body>
+</html>

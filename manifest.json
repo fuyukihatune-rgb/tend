@@ -1,0 +1,15 @@
+{
+  "name": "Tend - 世話する習慣",
+  "short_name": "Tend",
+  "description": "途切れてもいい。ただ、続きを置く。責めない習慣トラッカー。",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#14161a",
+  "theme_color": "#14161a",
+  "orientation": "portrait-primary",
+  "lang": "ja",
+  "icons": [
+    { "src": "./icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "./icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}
