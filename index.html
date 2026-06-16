@@ -137,6 +137,10 @@ body { padding-top: calc(env(safe-area-inset-top,0px) + 52px); padding-bottom: c
 
 /* Preview */
 .preview-plant { text-align: center; background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 24px; margin-bottom: 22px; }
+
+  /* キーボードアクセシビリティ */
+  :focus-visible { outline: 2px solid currentColor; outline-offset: 3px; border-radius: 4px; }
+  button:focus-visible, a:focus-visible, [tabindex]:focus-visible { outline: 2px solid currentColor; outline-offset: 3px; }
 </style>
 </head>
 <body>
